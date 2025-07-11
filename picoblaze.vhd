@@ -88,8 +88,8 @@ constant shift_rotate_id : std_logic_vector(4 downto 0) := "10100";
 -- added new instruction
 -- flip
 constant flip_id : std_logic_vector(4 downto 0) := "11111";
--- additional new instruction: swap nibbles
-constant swap_id : std_logic_vector(4 downto 0) := "11101";
+-- added LEDT instruction (write sX to LED port 0x01)
+constant ledt_id : std_logic_vector(4 downto 0) := "11100";
 --
 -- input/output group
 constant input_p_to_x_id : std_logic_vector(4 downto 0) := "10000";
@@ -165,13 +165,6 @@ component flip
           Y : out std_logic_vector(7 downto 0);
           clk : in std_logic);
     end component;
-
--- swap component declaration
-component swap
-    Port (operand : in std_logic_vector(7 downto 0);
-          Y : out std_logic_vector(7 downto 0);
-          clk : in std_logic);
-  end component;
 --
 -- Definition of an 8-bit logical processing unit
 --
@@ -200,8 +193,7 @@ component register_and_flag_enable
     Port (i_logical: in std_logic;
 	 		 i_arithmetic: in std_logic;
 			 i_shift_rotate: in std_logic;
-			 i_flip: in std_logic;                -- flip instruction
-			 i_swap: in std_logic;               -- swap instruction
+			 i_flip: in std_logic;					-- added new instruction
 			 i_returni: in std_logic;
 			 i_input: in std_logic;
           active_interrupt : in std_logic;
@@ -368,8 +360,7 @@ signal i_output : std_logic;
 
 -- added new instruction
 signal i_flip : std_logic;
--- new swap instruction signal
-signal i_swap : std_logic;
+signal i_ledt : std_logic;
 
 
 signal conditional : std_logic;
@@ -405,7 +396,6 @@ signal arithmetic_result       : std_logic_vector(7 downto 0);
 signal arithmetic_carry        : std_logic;
 signal ALU_result              : std_logic_vector(7 downto 0);
 signal flip_result : std_logic_vector(7 downto 0);
-signal swap_result : std_logic_vector(7 downto 0);
 --
 -- Flag signals
 --
@@ -437,7 +427,7 @@ begin
    -- Connections to output port and port address
    --
    out_port <= sX_register;
-   port_id <= second_operand;
+   port_id <= "00000001" when i_ledt = '1' else second_operand;
    --
    --
    -- Input and Output Strobes
@@ -482,12 +472,6 @@ begin
             Y => flip_result,
             clk => clk);
 
-  -- swap instruction block
-  swap_group: swap
-  port map (operand => sX_register,
-            Y => swap_result,
-            clk => clk);
-
    logical_group: logical_bus_processing
    port map (first_operand => sX_register,
              second_operand => second_operand,
@@ -510,7 +494,6 @@ begin
 	 		    i_arithmetic => i_arithmetic,
 			 	 i_shift_rotate => i_shift_rotate,
 				 i_flip => i_flip,		  -- added new instruction
-				 i_swap => i_swap,		  -- added swap instruction
 			 	 i_returni => i_returni,
 				 i_input => i_input,
           	 active_interrupt => active_interrupt,
@@ -670,11 +653,7 @@ begin
         i_output_y_to_x <= '1' when instruction(15 downto 11) = output_y_to_x_id else '0';
         i_interrupt <= '1' when instruction(15 downto 11) = interrupt_id else '0';
 	i_shift_rotate <= '1' when instruction(15 downto 11) = shift_rotate_id else '0';
-
--- added new instruction
-	i_flip <= '1' when instruction(15 downto 11) = flip_id else '0';
-	-- swap decode
-	i_swap <= '1' when instruction(15 downto 11) = swap_id else '0';
+	i_ledt <= '1' when instruction(15 downto 11) = ledt_id else '0';
 
 	i_add_sub <= instruction(12);
 	i_carry_nocarry <= instruction(11);
@@ -686,7 +665,7 @@ begin
 				 or i_or_k_to_x or i_or_y_to_x or i_xor_k_to_x or i_xor_y_to_x;
 
 	i_input <= i_input_p_to_x or i_input_y_to_x;
-	i_output <= i_output_p_to_x or i_output_y_to_x;
+	i_output <= i_output_p_to_x or i_output_y_to_x or i_ledt;
 
 	--
 	-- get ALU result
@@ -697,7 +676,6 @@ begin
 							or (in_port(i) and i_input)
 							or (arithmetic_result(i) and i_arithmetic)
 							or (flip_result(i) and i_flip)		-- added new instruction
-							or (swap_result(i) and i_swap)		-- added swap instruction
 							or (logical_result(i) and i_logical);
 	end generate ALU_loop;
 

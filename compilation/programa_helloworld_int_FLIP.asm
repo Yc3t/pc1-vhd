@@ -32,7 +32,6 @@ start:		CALL		recibe
 parte1:		INPUT		txreg,S7
 		ADD		txreg,00
 		JUMP Z		parte2
-		SWAP		txreg
 		CALL		transmite
 		ADD		S7,01
 		JUMP		parte1
@@ -164,13 +163,21 @@ delay_inner:
         	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 interrup:	DISABLE 	INTERRUPT
 		CALL 		recibe
-		FLIP		rxreg
-		LOAD 		txreg,rxreg
-		SWAP		txreg
-		CALL 		transmite
-		ADD		S6,30
-		LOAD 		txreg,S6
-		CALL 		transmite
+		LOAD		txreg, rxreg            ; preserve original char for echo
+		; Convert ASCII '0'-'9' or 'A'-'F' to 0-15 ----------------
+		LOAD		S0, rxreg    ; copy char
+		SUB		S0,41        ; subtract 'A' to test if >= 'A'
+		JUMP NC		HEX_PATH
+		; DECIMAL PATH (char < 'A')
+		SUB		rxreg,30    ; rxreg = char - '0'
+		JUMP		WRITE_LED
+
+HEX_PATH:
+		SUB		rxreg,37    ; rxreg = char - 0x37 -> 10-15
+
+WRITE_LED:
+		LEDT		rxreg        ; write to LED bar
+		CALL		transmite
 		RETURNI		ENABLE
 		ADDRESS		FF
 		JUMP		interrup

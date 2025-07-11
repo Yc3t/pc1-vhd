@@ -2,13 +2,13 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 
-entity .\programa_helloworld_int_FLIP is
+entity programa_helloworld_int_FLIP is
 	port( address : in std_logic_vector(7 downto 0);
 		clk : in std_logic;
 		dout : out std_logic_vector(15 downto 0));
 	end;
 
-architecture v1 of .\programa_helloworld_int_FLIP is
+architecture v1 of programa_helloworld_int_FLIP is
 
 	constant ROM_WIDTH: INTEGER:= 16;
 	constant ROM_LENGTH: INTEGER:= 256;
@@ -82,16 +82,16 @@ constant rom: rom_table := rom_table'(
 	"1001000000000000",
 	"1111000000000000",
 	"1101100000010000",
-	"1111101000000000",
 	"0100000101000000",
-	"1101100000011101",
-	"0010011000110000",
-	"0100000111000000",
+	"0100000001000000",
+	"0011000001000001",
+	"1101011101000111",
+	"0011001000110000",
+	"1101000001001000",
+	"0011001000110111",
+	"1110001000000000",
 	"1101100000011101",
 	"1011000000000001",
-	"0000000000000000",
-	"0000000000000000",
-	"0000000000000000",
 	"0000000000000000",
 	"0000000000000000",
 	"0000000000000000",

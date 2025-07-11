@@ -69,8 +69,6 @@ bit2 bit1 bit0
 /* flip */ /* added new instruction */
 char *flip_id = "11111";                                           //Codigo de operacion, 5 bits m�s significativos de los 16 que forman las instrucci�n
 
-/* swap (nibble swap) */ /* added new instruction */
-char *swap_id = "11101";
 
 /* input/output group */
 char *input_p_to_x_id = "10000";
@@ -93,7 +91,7 @@ char *not_carry_id = "11";
 #define PROGRAM_COUNT 256	/* total program word */                // Maximo numero de instrucciones en el programa
         
 /* increase instruction_count for added new instruction */
-#define instruction_count 31/* total instruction set */             // Numero máximo de instrucciones
+#define instruction_count 31/* total instruction set */             // Numero mximo de instrucciones
 
 #define CONSTANT_COUNT 100	/* max 100 constant can be declared */
 #define REG_COUNT 8			/* max 8 namereg can be declared */     // Maximo Numero de registros 
@@ -165,8 +163,10 @@ char *instruction_set[] = {
 	"CONSTANT",	/* 26 */
 	"NAMEREG",	/* 27 */
 	"ADDRESS",	/* 28 */
-	"FLIP",	/* 29 */ /* added new instruction */
-	"SWAP"};	/* 30 */ /* added new instruction */
+	"FLIP",	/* 29 */
+	"LEDT"}; /* 30 */
+/* add ledt opcode id */
+char *ledt_id = "11100"; /* LEDT instruction */
 
 int error = 0;
 /*====================================== */
@@ -433,7 +433,7 @@ void test_instructions(void)
 				case 18: /* SLX */
 				case 19: /* SLA */
 				case 20: /* RL */
-				case 29: /* FLIP */ /* added new instruction, same syntax with shift/rotate */
+				case 29: /* FLIP */
 					if(op[i].op2 != NULL){
 						printf("ERROR - Too many Operands for %s on line %d\n", op[i].instruction, i+1);
 						fprintf(ofp,"ERROR - Too many Operands for %s on line %d\n", op[i].instruction, i+1);
@@ -566,32 +566,19 @@ void test_instructions(void)
 						}
 					}
 					break;
-				case 29: /* FLIP */ /* added new instruction */                          // para el caso de instrucciones FLIP.   
-					insert_instruction(flip_id, op[i].address);                          // inserta codigo m�quina del codigo de operacion.
-					if((reg_n = find_namereg(op[i].op1)) != -1)                          // Solo tiene un operando que siempre sera un registro o un namereg, sino error.
-						insert_sXX(reg_n, op[i].address);                                // inserta dodigo maquina del 2do operando si es namereg
-					else if((reg_n = register_number(op[i].op1)) != -1)                  
-						insert_sXX(reg_n, op[i].address);                                // inserta codigo m�quina del 2do operando si es registro
-					else {
-						printf("ERROR - Invalid operand %s on line %d\n",op[i].op1, i+1);
-						fprintf(ofp,"ERROR - Invalid operand %s on line %d\n",op[i].op1, i+1);
+				case 30: /* LEDT */ /* new instruction similar single operand */
+					if(op[i].op2 != NULL){
+						printf("ERROR - Too many Operands for %s on line %d\n", op[i].instruction, i+1);
+						fprintf(ofp,"ERROR - Too many Operands for %s on line %d\n", op[i].instruction, i+1);
+						error++;
+					} else if(op[i].op1 == NULL){
+						printf("ERROR - Missing operand for %s on line %d\n", op[i].instruction, i+1);
+						fprintf(ofp,"ERROR - Missing operand for %s on line %d\n", op[i].instruction, i+1);
 						error++;
 					}
 					break;
-				case 30: /* SWAP */ /* added new instruction */
-                    insert_instruction(swap_id, op[i].address);
-                    if((reg_n = find_namereg(op[i].op1)) != -1)
-                        insert_sXX(reg_n, op[i].address);
-                    else if((reg_n = register_number(op[i].op1)) != -1)
-                        insert_sXX(reg_n, op[i].address);
-                    else {
-                        printf("ERROR - Invalid operand %s on line %d\n",op[i].op1, i+1);
-                        fprintf(ofp,"ERROR - Invalid operand %s on line %d\n",op[i].op1, i+1);
-                        error++;
-                    }
-                    break;
 			}
-			op[i].address = address;                                                      // si la instruccin analizada es una instruccion (no directiva) incrementa la direcci�n de memoria donde se almacena.
+			op[i].address = address;                                                      // si la instruccin analizada es una instruccion (no directiva) incrementa la direccin de memoria donde se almacena.
 			/* add (j > 28) for FLIP instruction, - added new instruction */
 			if((j < 26) ||(j > 28)) address ++;
 		} else op[i].address = address; /* This is a comment line*/
@@ -799,7 +786,7 @@ void write_program_word(void)                                                   
 				case 27: /* NAMEREG */
 				case 28: /* ADDRESS */
 					break;
-				case 29: /* FLIP */ /* added new instruction */                          // para el caso de instrucciones FLIP.   
+				case 29: /* FLIP */
 					insert_instruction(flip_id, op[i].address);                          // inserta codigo m�quina del codigo de operacion.
 					if((reg_n = find_namereg(op[i].op1)) != -1)                          // Solo tiene un operando que siempre sera un registro o un namereg, sino error.
 						insert_sXX(reg_n, op[i].address);                                // inserta dodigo maquina del 2do operando si es namereg
@@ -811,18 +798,18 @@ void write_program_word(void)                                                   
 						error++;
 					}
 					break;
-				case 30: /* SWAP */ /* added new instruction */
-                    insert_instruction(swap_id, op[i].address);
-                    if((reg_n = find_namereg(op[i].op1)) != -1)
-                        insert_sXX(reg_n, op[i].address);
-                    else if((reg_n = register_number(op[i].op1)) != -1)
-                        insert_sXX(reg_n, op[i].address);
-                    else {
-                        printf("ERROR - Invalid operand %s on line %d\n",op[i].op1, i+1);
-                        fprintf(ofp,"ERROR - Invalid operand %s on line %d\n",op[i].op1, i+1);
-                        error++;
-                    }
-                    break;
+				case 30: /* LEDT */
+					insert_instruction(ledt_id, op[i].address);
+					if((reg_n = find_namereg(op[i].op1)) != -1)
+						insert_sXX(reg_n, op[i].address);
+					else if((reg_n = register_number(op[i].op1)) != -1)
+						insert_sXX(reg_n, op[i].address);
+					else {
+						printf("ERROR - Invalid operand %s on line %d\n",op[i].op1, i+1);
+						fprintf(ofp,"ERROR - Invalid operand %s on line %d\n",op[i].op1, i+1);
+						error++;
+					}
+					break;
 			}
 		}
 	}

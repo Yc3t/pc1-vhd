@@ -28,8 +28,18 @@ set_property SLEW         SLOW             [get_ports tx]
 ########################################################################
 ##  User LED0 (LD0 near the button)
 ########################################################################
-set_property PACKAGE_PIN R14               [get_ports LED]
-set_property IOSTANDARD LVCMOS33           [get_ports LED]
+# LD0..LD3
+set_property PACKAGE_PIN R14               [get_ports LED0]
+set_property IOSTANDARD LVCMOS33           [get_ports LED0]
+
+set_property PACKAGE_PIN P14               [get_ports LED1]
+set_property IOSTANDARD LVCMOS33           [get_ports LED1]
+
+set_property PACKAGE_PIN N16               [get_ports LED2]
+set_property IOSTANDARD LVCMOS33           [get_ports LED2]
+
+set_property PACKAGE_PIN M14               [get_ports LED3]
+set_property IOSTANDARD LVCMOS33           [get_ports LED3]
 
 # Allow any unused top-level ports to remain unconstrained (debug signals)
 set_property BITSTREAM.GENERAL.UNCONSTRAINEDPINS ALLOW [current_design]

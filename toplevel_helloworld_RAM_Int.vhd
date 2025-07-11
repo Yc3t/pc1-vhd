@@ -7,7 +7,10 @@ entity toplevel is
               clk : in std_logic;
                rx : in std_logic;
               tx : out std_logic;
-             LED : out std_logic);
+             LED0 : out std_logic;
+             LED1 : out std_logic;
+             LED2 : out std_logic;
+             LED3 : out std_logic);
 end toplevel ;
 
 architecture behavioral of toplevel is
@@ -73,6 +76,7 @@ x"4F", x"4E", x"54", x"49", x"4E", x"55", x"45", x"20",
 x"2A", x"0A", x"0D", x"00", x"00", x"00", x"00", x"00" );
 
 signal rxbuff_out,RAM_out: std_logic_vector(7 downto 0);
+signal LED_BAR : std_logic_vector(7 downto 0);
 
 -- Add clock divider signals
 -- signal clk_50mhz : std_logic := '0';
@@ -83,8 +87,13 @@ signal clk_locked: std_logic;
 
 begin
 
-	LED <= reset; 	-- para comprobar la programacion encendemos
-						--	un led cada vez que reseteamos
+    LED0 <= LED_BAR(0);
+    LED1 <= LED_BAR(1);
+    LED2 <= LED_BAR(2);
+    LED3 <= LED_BAR(3);
+
+    -- reset indicator (optional): pulse LED0 on reset
+    -- LED0 <= reset;
 
 	-- Debug signals are kept internal; removed external ports
 	picoint <= NOT rx;
@@ -135,9 +144,11 @@ begin
 	process (clk_50)
 	begin
 		if (clk_50'event and clk_50 = '1') then
-			if (writestrobe = '1' and portid<x"40") then
-				RAM(to_integer(unsigned(portid))) <= outport;
-			end if;
+            if (writestrobe = '1' and portid = x"01") then
+                LED_BAR <= outport;
+            elsif (writestrobe = '1' and portid<x"40") then
+                RAM(to_integer(unsigned(portid))) <= outport;
+            end if;
 		end if;
 	end process;
 	RAM_out <= RAM(to_integer(unsigned(portid)));
